@@ -23,11 +23,10 @@ resource "aws_iam_role" "knowledge_base_service_role" {
       },
     ]
   })
- #TODO #1 terraform below three policies
   managed_policy_arns = [
-    "arn:aws:iam::627624717018:policy/service-role/AmazonBedrockFoundationModelPolicyForKnowledgeBase_ai_agent_kb_service_role",
-    "arn:aws:iam::627624717018:policy/service-role/AmazonBedrockOSSPolicyForKnowledgeBase_ai_agent_kb_service_role",
-    "arn:aws:iam::627624717018:policy/service-role/AmazonBedrockS3PolicyForKnowledgeBase_ai_agent_kb_service_role",
+    aws_iam_policy.invoke_bedrock_fm.arn,
+    aws_iam_policy.access_collections.arn,
+    aws_iam_policy.access_s3.arn
   ]
 
   tags = {
@@ -35,68 +34,86 @@ resource "aws_iam_role" "knowledge_base_service_role" {
   }
 }
 
-# resource "aws_iam_role_policy" "knowledge_base_service_role_policy" {
-#   name = "knowledge_base_service_policy"
-#   role = aws_iam_role.knowledge_base_service_role.id
+resource "aws_iam_policy" "invoke_bedrock_fm" {
+  name = "AmazonBedrockFoundationModelPolicyForKnowledgeBase_ai_agent_kb_service_role"
+  #   role = aws_iam_role.knowledge_base_service_role.id
+  path = "/service-role/"
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "BedrockInvokeModelStatement",
+        "Effect" : "Allow",
+        "Action" : [
+          "bedrock:InvokeModel"
+        ],
+        "Resource" : [
+          "arn:aws:bedrock:us-east-1::foundation-model/cohere.embed-english-v3"
+        ]
+      }
+  ] })
+}
 
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Sid : "BedrockInvokeModelStatement",
-#         Effect : "Allow",
-#         Action : [
-#           "bedrock:InvokeModel"
-#         ],
-#         Resource : [
-#           "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
-#         ]
-#       },
-#       {
-#         Sid : "OpenSearchServerlessAPIAccessAllStatement",
-#         Effect : "Allow",
-#         Action : [
-#           "aoss:APIAccessAll"
-#         ],
-#         Resource : [
-#           module.opensearch_serverless.arn
-#         ]
-#       },
-#       {
-#         Sid : "S3ListBucketStatement",
-#         Effect : "Allow",
-#         Action : [
-#           "s3:ListBucket"
-#         ],
-#         Resource : [
-#           "arn:aws:s3:::tt0724llm"
-#         ],
-#         Condition : {
-#           StringEquals : {
-#             "aws:ResourceAccount" : [
-#               "627624717018"
-#             ]
-#           }
-#         }
-#       },
-#       {
-#         Sid : "S3GetObjectStatement",
-#         Effect : "Allow",
-#         Action : [
-#           "s3:GetObject"
-#         ],
-#         Resource : [
-#           "arn:aws:s3:::tt0724llm/*"
-#         ],
-#         Condition : {
-#           StringEquals : {
-#             "aws:ResourceAccount" : [
-#               "627624717018"
-#             ]
-#           }
-#         }
-#       }
-#     ]
-#   })
-# }
 
+resource "aws_iam_policy" "access_collections" {
+  name = "AmazonBedrockOSSPolicyForKnowledgeBase_ai_agent_kb_service_role"
+  path = "/service-role/"
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "OpenSearchServerlessAPIAccessAllStatement",
+        "Effect" : "Allow",
+        "Action" : [
+          "aoss:APIAccessAll"
+        ],
+        "Resource" : [
+          "arn:aws:aoss:us-east-1:627624717018:collection/xc5517cl53txt998rcdj"
+        ]
+      }
+  ] })
+}
+
+resource "aws_iam_policy" "access_s3" {
+  name = "AmazonBedrockS3PolicyForKnowledgeBase_ai_agent_kb_service_role"
+  path = "/service-role/"
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "S3ListBucketStatement",
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:ListBucket"
+        ],
+        "Resource" : [
+          "arn:aws:s3:::ds-bedrock-knowledge-bases"
+        ],
+        "Condition" : {
+          "StringEquals" : {
+            "aws:ResourceAccount" : [
+              "627624717018"
+            ]
+          }
+        }
+      },
+      {
+        "Sid" : "S3GetObjectStatement",
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:GetObject"
+        ],
+        "Resource" : [
+          "arn:aws:s3:::ds-bedrock-knowledge-bases/*"
+        ],
+        "Condition" : {
+          "StringEquals" : {
+            "aws:ResourceAccount" : [
+              "627624717018"
+            ]
+          }
+        }
+      }
+    ]
+  })
+}

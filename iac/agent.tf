@@ -122,7 +122,7 @@ resource "aws_opensearchserverless_collection" "ai_agent_collection" {
 
 resource "aws_bedrockagent_knowledge_base" "ai_agent_knowledge_base" {
   name     = "ai-agent-knowledge-base"
-  role_arn = "arn:aws:iam::627624717018:role/service-role/ai_agent_kb_service_role"
+  role_arn = aws_iam_role.knowledge_base_service_role.arn
   knowledge_base_configuration {
     vector_knowledge_base_configuration {
       embedding_model_arn = "arn:aws:bedrock:us-east-1::foundation-model/cohere.embed-english-v3"
@@ -132,7 +132,6 @@ resource "aws_bedrockagent_knowledge_base" "ai_agent_knowledge_base" {
   storage_configuration {
     type = "OPENSEARCH_SERVERLESS"
     opensearch_serverless_configuration {
-    # collection_arn = "arn:aws:aoss:us-east-1:627624717018:collection/tmlkr6fa4kpib7gvm13e"
       collection_arn    = aws_opensearchserverless_collection.ai_agent_collection.arn
       vector_index_name = "bedrock-knowledge-base-default-index"
       field_mapping {
