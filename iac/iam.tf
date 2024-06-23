@@ -23,6 +23,7 @@ resource "aws_iam_role" "knowledge_base_service_role" {
       },
     ]
   })
+  #TODO #1 terraform below three policies
   managed_policy_arns = [
     aws_iam_policy.invoke_bedrock_fm.arn,
     aws_iam_policy.access_collections.arn,
